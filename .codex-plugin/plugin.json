@@ -1,0 +1,34 @@
+{
+  "name": "youtube-trend-finder",
+  "description": "Collect YouTube Data API evidence for a niche and guide agents to create curated trend and video-idea CSVs.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Local project"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "youtube",
+    "trends",
+    "video-ideas",
+    "content-research",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "YouTube Trend Finder",
+    "shortDescription": "Find YouTube trends and video ideas",
+    "longDescription": "Collect YouTube Data API evidence for a niche, preserve clear source boundaries, and guide an agent to produce a curated top-20 trends CSV plus 30 original video suggestions.",
+    "developerName": "Local project",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Find YouTube trends for a niche",
+      "Create 30 video ideas from trend evidence",
+      "Collect US YouTube trend data"
+    ],
+    "brandColor": "#2563EB"
+  }
+}
