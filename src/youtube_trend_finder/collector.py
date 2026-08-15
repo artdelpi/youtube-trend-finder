@@ -15,7 +15,9 @@ from typing import Any
 
 BASE_URL = "https://www.googleapis.com/youtube/v3"
 ENV_KEYS = ("YOUTUBE_API_KEY", "API_KEY_YOUTUBE_V3", "YOUTUBE_API_KEY_V3")
-QUOTA_COST = {"search.list": 1, "videos.list": 1}
+# YouTube Data API v3 quota units per call. search.list is 100x more expensive
+# than videos.list, which dominates the cost of a collection run.
+QUOTA_COST = {"search.list": 100, "videos.list": 1}
 
 
 def load_api_key(path: str | Path = ".env") -> str:

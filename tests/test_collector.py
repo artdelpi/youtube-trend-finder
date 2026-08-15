@@ -25,6 +25,10 @@ class CollectorHelpersTest(unittest.TestCase):
         value = dt.datetime(2026, 8, 14, 12, 34, 56, tzinfo=dt.timezone.utc)
         self.assertEqual(collector.iso_utc(value), "2026-08-14T12:34:56Z")
 
+    def test_quota_cost_matches_youtube_pricing(self) -> None:
+        self.assertEqual(collector.QUOTA_COST["search.list"], 100)
+        self.assertEqual(collector.QUOTA_COST["videos.list"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
