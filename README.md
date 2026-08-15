@@ -1,6 +1,6 @@
 # YouTube Trend Finder
 
-Collect YouTube Data API evidence for a niche, then let an AI agent turn that evidence into curated trend and video-idea CSVs.
+Collect YouTube Data API evidence for a niche, then let an AI agent turn that evidence into a curated trending-theme CSV.
 
 This repo is organized to work with both Codex and Claude-style agent workflows:
 
@@ -26,6 +26,25 @@ py scripts/collect.py "horror channel" --days 30 `
   --pages-per-keyword 2
 ```
 
+Agent workflows can choose windows by intent:
+
+```text
+flash      3 days
+weekly     7 days
+monthly    30 days
+evergreen  90 days
+compare    run 7/30/60 days and compare momentum
+```
+
+Ranking intent:
+
+```text
+discovery      emerging themes
+production     researchable/shippable themes
+evergreen      durable subjects
+news-reactive  current releases and named entities
+```
+
 The collector writes timestamped files under `outputs/`:
 
 ```text
@@ -38,7 +57,7 @@ outputs/YYYYMMDD-HHMMSS/<topic>-api_payload.json
 Use this prompt with Codex or Claude:
 
 ```text
-Use $youtube-trend-finder to find YouTube trends for a horror channel in the US over the last 30 days. Choose relevant English keywords, scan 2 pages per keyword, run collector.collect(...), read the raw API output, create a curated top-20 trends CSV in the timestamped directory under outputs/, and create a second CSV with 30 original video suggestions based on those trends.
+Use $youtube-trend-finder to find YouTube trending themes for a horror channel in the US with --window compare and --intent production. Infer relevant English keywords, scan 2 pages per keyword, run collector.collect(...) for the required window(s), read the raw API output, and create one curated `*_trending_themes.csv` in the timestamped directory under outputs/. Do not create video ideas, titles, hooks, scripts, thumbnail concepts, or production suggestions.
 ```
 
 ## Project Structure
@@ -55,6 +74,9 @@ src/youtube_trend_finder/    Python package
 tests/                       Unit tests for pure helpers
 outputs/                     Generated API and curation files
 ```
+
+Research and cross-stage handoff are handled by `../researcher` and
+`../orchestrator`, not by this repository.
 
 ## Development
 

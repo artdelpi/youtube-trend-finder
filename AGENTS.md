@@ -1,14 +1,14 @@
 # YouTube Trend Finder
 
-Collect YouTube Data API evidence for a niche and convert it into curated trend and video-idea CSVs.
+Collect YouTube Data API evidence for a niche and convert it into curated trending-theme CSVs.
 
 ## Skills
 
 This repo ships one agent skill:
 
-- `$youtube-trend-finder` - choose niche keywords, collect YouTube Data API evidence, read the raw output, create a top-20 trends CSV, and create 30 original video ideas.
+- `$youtube-trend-finder` - choose niche keywords, collect YouTube Data API evidence, read the raw output, and create a ranked CSV of trending themes. Supports `flash`, `weekly`, `monthly`, `evergreen`, and `compare` windows plus `discovery`, `production`, `evergreen`, and `news-reactive` ranking intent. Do not create video ideas or titles.
 
-Codex should read `skills/youtube-trend-finder/SKILL.md` when the user asks for YouTube trend discovery, niche research, or video ideas based on current YouTube data. `.agents/skills/youtube-trend-finder/SKILL.md` mirrors the same workflow for local workspace discovery.
+Codex should read `skills/youtube-trend-finder/SKILL.md` when the user asks for YouTube trend discovery, niche research, or currently trending themes based on YouTube data. `.agents/skills/youtube-trend-finder/SKILL.md` mirrors the same workflow for local workspace discovery.
 
 ## Build & Test
 
@@ -23,6 +23,18 @@ Use the CLI for manual collection:
 
 ```powershell
 py scripts/collect.py "<topic>" --days 30 --keyword "<keyword>" --pages-per-keyword 2
+```
+
+Agent window presets:
+
+```text
+flash=3 days, weekly=7 days, monthly=30 days, evergreen=90 days, compare=7/30/60 days
+```
+
+Agent ranking intents:
+
+```text
+discovery, production, evergreen, news-reactive
 ```
 
 Existing skill prompts may keep using:

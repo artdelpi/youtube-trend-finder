@@ -1,4 +1,4 @@
 interface:
   display_name: "YouTube Trend Finder"
-  short_description: "Find US YouTube trends and video ideas"
-  default_prompt: "Use $youtube-trend-finder to find the top YouTube trends and video ideas for a niche in the US."
+  short_description: "Find US YouTube trending themes"
+  default_prompt: "Use $youtube-trend-finder to find the top YouTube trending themes for a niche in the US. Do not generate video ideas or titles."
