@@ -1,157 +1,143 @@
 ---
 name: youtube-trend-finder
-description: Find current YouTube trending themes for a niche, especially US/English trends, using the local collector.collect function. Use when the user asks to discover what themes, topics, memes, franchises, products, people, formats, or conversations are trending on YouTube. Do not generate video ideas, titles, hooks, scripts, thumbnail concepts, or production suggestions.
+description: Find current YouTube trend evidence for a niche, then rank and turn it into original video proposals for one explicitly selected editorial profile. Requires --profile on every run.
 ---
 
 # YouTube Trend Finder
 
-Use `collector.collect(...)` or `py scripts/collect.py` only for collection. Do the trend inference yourself after reading the generated API output.
+Collect broad YouTube evidence first. Apply one validated editorial profile to
+selection, ranking, and proposal generation afterward. Never run without an
+explicit `--profile`; there is no default profile or generic fallback.
+
+## Profile gate
+
+Validate before any network call:
+
+```powershell
+py scripts/profiles.py validate <profile_id>
+```
+
+List available profiles:
+
+```powershell
+py scripts/profiles.py list
+```
+
+Reject missing, unknown, malformed, absolute, or path-like names. Profiles load
+only from the enclosing Slop Factory `profiles/<id>/editorial-profile.json`.
 
 ## Workflow
 
-1. Infer or ask for:
-- `topic`
-- time window in days, or a window preset
-- ranking intent
-- region and language, defaulting to `US` and `en`
+1. Resolve:
 
-Window presets:
+- topic or niche;
+- required profile id;
+- time window;
+- ranking intent;
+- region and language, normally `US` and `en`;
+- 6-10 broad English keywords covering core, adjacent, format, and emerging
+  entity terms.
 
-- `flash`: 3 days
-- `weekly`: 7 days
-- `monthly`: 30 days
-- `evergreen`: 90 days
-- `compare`: run 7, 30, and 60 day collections with the same keywords and
-  compare momentum
+Windows: `flash` 3 days, `weekly` 7, `monthly` 30, `evergreen` 90, and
+`compare` 7/30/60 with one keyword set. Intents: `discovery`, `production`,
+`evergreen`, and `news-reactive`.
 
-Intent presets:
-
-- `discovery`: prioritize emerging themes
-- `production`: prioritize researchable, shippable themes
-- `evergreen`: prioritize durable themes
-- `news-reactive`: prioritize recent named entities/current releases
-
-2. Choose 6-10 English keywords that cover the niche from multiple angles:
-- core category terms
-- adjacent audience terms
-- format terms
-- emerging meme/franchise/person/entity terms when relevant
-
-3. Run collection from the repository root. The default collection depth is 2 pages per keyword and 50 search results per page, so 10 keywords can inspect up to 1000 raw search results before deduplication.
-
-CLI form:
+2. Collect from the repository root:
 
 ```powershell
-py scripts/collect.py "<topic>" --days <days> --keyword "<keyword-1>" --keyword "<keyword-2>" --pages-per-keyword 2
+py scripts/collect.py "<topic>" --profile <profile_id> --days <days> --keyword "<keyword-1>" --keyword "<keyword-2>" --pages-per-keyword 2
 ```
 
-For `compare`, run the same command three times with `--days 7`, `--days 30`,
-and `--days 60` using the same keyword set. Read all generated outputs before
-ranking the final themes.
+For `compare`, repeat at 7, 30, and 60 days with the same profile and keywords.
+The default depth is two 50-result pages per keyword. Read every generated
+`*-api_videos.csv`, `*-api_payload.json`, and `*-profile_context.json`.
 
-Python form:
+`collector.collect(...)` remains a raw collection primitive. It is not a full
+trend_finder run and does not replace the profile gate.
+
+3. Build broad candidate themes from evidence. Preserve source boundaries:
+
+- `api_*`: YouTube API returns;
+- `collector_*`: local calculations;
+- `codex_*`: agent inference;
+- `profile_*`: editorial profile decisions.
+
+Each candidate must retain dated evidence URLs and values for recency, velocity,
+engagement, cross-platform confirmation when available, saturation, and expected
+useful life. Normalize those six judgments as `codex_recency_score`,
+`codex_growth_score`, `codex_engagement_score`, `codex_cross_platform_score`,
+`codex_saturation_score`, and `codex_lifespan_score` on a 0-100 scale, each with
+an evidence note.
+
+4. Apply the profile:
 
 ```powershell
-py -c "import collector as c; r=c.collect('<topic>', [<keywords>], <days>); print(r['csv']); print(r['json']); print(r['report']['estimated_quota_units'])"
+py scripts/editorialize.py --profile <profile_id> --input "<candidate-csv-or-json>"
 ```
 
-For a smaller or larger scan in Python, set `pages_per_keyword` explicitly:
+Read `*-profile-ranked.json`, `*-profile-drafts.json`, and
+`*-generation-prompt.md`. Deterministic scoring separates trend strength from
+profile fit. The profile must visibly affect:
+
+- selection and rejection;
+- profile-fit score and rationale;
+- editorial angle;
+- primary and alternate titles;
+- hook and thesis;
+- video structure;
+- differentiation from the complete reference catalog;
+- saturation risk and opportunity window.
+
+Discard incompatible popularity with a reason. Do not hide discarded candidates.
+Crowding is a risk label, not an automatic rejection.
+
+5. Write one final `*-trending_themes.csv`. Keep a `theme` column for downstream
+compatibility and include:
+
+- `profile_id`
+- `title`
+- `alternate_titles`
+- `source_trend`
+- `evidence_urls_and_dates`
+- `trend_score`
+- `trend_score_components`
+- `trend_signal_gaps`
+- `profile_fit_score`
+- `profile_fit_reason`
+- `angle`
+- `hook`
+- `thesis`
+- `structure`
+- `research_or_validation_needed`
+- `difference_from_existing_content`
+- `saturation_risk`
+- `opportunity_window`
+
+Keep relevant raw evidence fields too. Never copy or closely paraphrase a
+reference title or transcript. Extract recurring grammar and structure while
+keeping proposals original.
+
+## Reference research
+
+Profiles may declare a public reference channel, complete catalog, and analysis.
+Refresh it without downloading video or audio:
 
 ```powershell
-py -c "import collector as c; r=c.collect('<topic>', [<keywords>], <days>, pages_per_keyword=5); print(r['csv']); print(r['json']); print(r['report']['estimated_quota_units'])"
+py scripts/collect_reference_channel.py --profile <profile_id> --refresh-captions
 ```
 
-4. Read the generated raw files in the timestamped output directory, such as:
+The command traverses the full YouTube uploads playlist, checks public Shorts and
+Lives tabs, fetches batched public metadata, caches available English captions in
+the enclosing repository's ignored `.slash_tmp/`, records every missing
+transcript, and writes compact catalog/analysis JSON at profile-declared paths.
+One failed or unavailable transcript must not abort the corpus.
 
-```text
-outputs/YYYYMMDD-HHMMSS/<topic>-api_videos.csv
-outputs/YYYYMMDD-HHMMSS/<topic>-api_payload.json
-```
+## Final response
 
-5. Create one curated trending themes CSV in the same timestamped output directory as the raw API files, named:
-
-```text
-<topic>-trending_themes.csv
-```
-
-6. The curated themes CSV must contain exactly 20 rows when enough evidence exists. Each row is a theme/topic that is already trending in the evidence, not a proposed video. Include:
-- `rank`
-- `codex_theme`
-- `codex_theme_summary`
-- `codex_theme_type`
-- `codex_why_trending`
-- `codex_us_relevance`
-- `codex_risk`
-- `api_evidence_titles`
-- `api_evidence_channels`
-- `api_total_views_evidence`
-- `collector_best_trend_score`
-- `collector_best_views_per_hour`
-- `collector_keywords`
-- `codex_example_search_queries`
-- `api_call_count_estimated`
-- `api_quota_units_estimated`
-- `api_cost_usd_estimated`
-- `codex_confidence`
-- `codex_source_boundary`
-- `codex_window_class`
-- `codex_momentum_note`
-- `codex_recommended_next_step`
-- `codex_researchability_score`
-- `codex_artifact_availability`
-- `codex_rights_risk`
-- `codex_saturation_risk`
-
-For `compare`, also include:
-
-- `codex_7d_signal`
-- `codex_30d_signal`
-- `codex_60d_signal`
-
-Allowed `codex_recommended_next_step` values:
-
-- `research_now`
-- `watchlist`
-- `skip_rights_risk`
-- `skip_too_generic`
-- `skip_real_harm`
-
-7. Do not create any separate video suggestions CSV. In particular, do not create:
-
-- video titles
-- video ideas
-- hooks
-- scripts
-- thumbnail concepts
-- production notes
-- content angles
-
-Examples of valid `codex_theme` values:
-- `Backrooms creepypasta`
-- `Obsession film reviews`
-- `analog horror VHS aesthetics`
-- `true overnight camping horror stories`
-
-8. Keep source boundaries explicit:
-- `api_*` fields summarize YouTube API returns.
-- `collector_*` fields come from `collector.py`.
-- `codex_*` fields are agent inference.
-
-9. Estimate API cost from the collection report and reuse the same values where cost fields are needed:
-- `api_call_count_estimated = len(report["api_calls"])`
-- `api_quota_units_estimated = report["estimated_quota_units"]`
-- `api_cost_usd_estimated = report["estimated_youtube_api_cost_usd"]`
-- Mention `report["raw_video_ids_found"]`, `report["unique_videos_found"]`, `report["pages_per_keyword"]`, and `report["max_results_per_page"]` in the final response.
-
-Prefer US audience relevance over raw global view count when ranking the final
-top 20. Respect the requested intent: discovery favors emerging momentum,
-production favors shippable/researchable themes, evergreen favors durable
-subjects, and news-reactive favors current releases/named entities. The final
-answer should report the inferred keywords, resolved window/intent, the path to
-`*_trending_themes.csv`, the top 5 theme names only, and this next command:
+Report the selected profile, keywords, window/intent, final CSV, top five adapted
+titles and source themes, collection counts and quota, incompatible discards,
+and any reference/transcript limitations. Finish with:
 
 ```text
 /research --themes-csv "<path-to-trending_themes.csv>" --rank 1
 ```
-
-Do not include generated video titles or suggestions.

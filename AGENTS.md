@@ -1,12 +1,13 @@
 # YouTube Trend Finder
 
-Collect YouTube Data API evidence for a niche and convert it into curated trending-theme CSVs.
+Collect broad YouTube Data API evidence, then use a required editorial profile
+to rank fit and create original video proposals.
 
 ## Skills
 
 This repo ships one agent skill:
 
-- `$youtube-trend-finder` - choose niche keywords, collect YouTube Data API evidence, read the raw output, and create a ranked CSV of trending themes. Supports `flash`, `weekly`, `monthly`, `evergreen`, and `compare` windows plus `discovery`, `production`, `evergreen`, and `news-reactive` ranking intent. Do not create video ideas or titles.
+- `$youtube-trend-finder` - require and validate an editorial profile, collect broad YouTube Data API evidence, rank fit separately from trend strength, and create profile-adapted video proposals. Supports `flash`, `weekly`, `monthly`, `evergreen`, and `compare` windows plus `discovery`, `production`, `evergreen`, and `news-reactive` ranking intent.
 
 Codex should read `skills/youtube-trend-finder/SKILL.md` when the user asks for YouTube trend discovery, niche research, or currently trending themes based on YouTube data. `.agents/skills/youtube-trend-finder/SKILL.md` mirrors the same workflow for local workspace discovery.
 
@@ -22,7 +23,7 @@ py -m unittest discover -s tests
 Use the CLI for manual collection:
 
 ```powershell
-py scripts/collect.py "<topic>" --days 30 --keyword "<keyword>" --pages-per-keyword 2
+py scripts/collect.py "<topic>" --profile <profile_id> --days 30 --keyword "<keyword>" --pages-per-keyword 2
 ```
 
 Agent window presets:
@@ -37,7 +38,11 @@ Agent ranking intents:
 discovery, production, evergreen, news-reactive
 ```
 
-Existing skill prompts may keep using:
+`collector.collect(...)` remains a raw collection primitive, not a complete
+trend_finder execution. Complete runs must pass `--profile` through the CLI and
+then call `scripts/editorialize.py` before generating proposals.
+
+Raw collection code may still use:
 
 ```powershell
 py -c "import collector as c; r=c.collect('<topic>', [<keywords>], <days>); print(r['csv']); print(r['json'])"

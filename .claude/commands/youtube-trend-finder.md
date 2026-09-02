@@ -1,26 +1,18 @@
 # YouTube Trend Finder
 
-Use this repository's YouTube trend workflow for the user's niche.
+Use this repository's profile-aware YouTube trend workflow.
 
 1. Read `skills/youtube-trend-finder/SKILL.md`.
-2. Parse optional `--window` and `--intent` flags. Defaults are
-   `--window monthly` and `--intent production`.
-3. Choose relevant English keywords for the niche.
-4. Run `collector.collect(...)` or `py scripts/collect.py`. For
-   `--window compare`, run 7, 30, and 60 day collections with the same keywords.
-5. Read the generated `outputs/YYYYMMDD-HHMMSS/*-api_payload.json` and `*-api_videos.csv`.
-6. Create `*-trending_themes.csv` with curated trending themes.
-7. Include decision fields for window class, momentum, researchability,
-   artifact availability, rights risk, saturation risk, and recommended next
-   step. For compare runs, include 7d/30d/60d signal fields.
-8. Do not create video ideas, video titles, hooks, thumbnail concepts, scripts,
-   production notes, or content angles. Each row must be a theme/topic that is
-   already trending in the evidence.
-9. Finish with the inferred keywords, resolved window/intent, the CSV path, the top 5 theme names only,
-   and this next command:
+2. Require an explicit `--profile`; validate it with `py scripts/profiles.py validate <id>` before any network call. Missing, unknown, or path-like values fail the command.
+3. Parse optional `--window` and `--intent`; defaults are `monthly` and `production`.
+4. Choose broad English niche keywords and run `py scripts/collect.py` with the validated `--profile`. Use 7/30/60-day collections for `compare`.
+5. Read every raw API file and profile-context snapshot, then build candidate themes with dated evidence.
+6. Run `py scripts/editorialize.py --profile <id> --input <candidates>`.
+7. Use the generated profile ranking and generation prompt to create original proposals. The profile must alter selection, score, title, angle, hook, thesis, structure, differentiation, saturation risk, and rationale.
+8. Preserve `api_*`, `collector_*`, `codex_*`, and `profile_*` boundaries. Record incompatible discards; never copy or closely paraphrase reference titles or transcripts.
+9. Write `*-trending_themes.csv` with `theme` plus the proposal fields required by the profile.
+10. Finish with profile id, keywords, window/intent, CSV path, top five adapted titles and source themes, evidence/quota counts, discards, limitations, and:
 
 ```text
 /research --themes-csv "<path-to-trending_themes.csv>" --rank 1
 ```
-
-Preserve source boundaries: `api_*` fields come from YouTube, `collector_*` fields come from code, and `codex_*` fields are agent inference.

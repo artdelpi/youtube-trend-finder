@@ -1,6 +1,6 @@
 {
   "name": "youtube-trend-finder",
-  "description": "Collect YouTube Data API evidence for a niche and guide agents to create curated trending-theme CSVs.",
+  "description": "Collect YouTube trend evidence and create proposals for a required editorial profile.",
   "version": "0.1.0",
   "author": {
     "name": "Local project"

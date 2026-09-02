@@ -1,24 +1,25 @@
 # YouTube Trend Finder
 
-Use `$youtube-trend-finder` to find YouTube trending themes for `<NICHE>` in the
-US. Support `--window flash|weekly|monthly|evergreen|compare`, `--days <N>`,
-and `--intent discovery|production|evergreen|news-reactive`.
+Use `$youtube-trend-finder` with an explicit `--profile <profile_id>`. Validate
+the profile before network access, collect broad US/English YouTube evidence,
+and keep volatile trend strength separate from stable editorial fit.
 
-Defaults are `--window monthly` and `--intent production`. Choose relevant
-English keywords, scan 2 pages per keyword unless the user asks otherwise, run
-`collector.collect(...)`, read the raw API output, and create one curated
-`*_trending_themes.csv` in the timestamped directory under `outputs/`. For
-`--window compare`, run 7, 30, and 60 day collections with the same keyword set
-before creating the final CSV.
+After creating a dated candidate CSV, run:
 
-Do not create video ideas, titles, hooks, scripts, thumbnail concepts, production notes, or content angles. Each row must be a theme/topic that is already trending in the evidence.
+```powershell
+py scripts/editorialize.py --profile <profile_id> --input "<candidate-csv>"
+```
 
-Include decision fields for window class, momentum, researchability, artifact
-availability, rights risk, saturation risk, and recommended next step. For
-compare runs, include 7d/30d/60d signal fields.
+Read the ranked JSON, draft JSON, and generation prompt. Produce original
+profile-adapted proposals in `*_trending_themes.csv`, retaining `theme` for
+downstream compatibility. Each proposal must identify the profile and include
+primary/alternate titles, source trend and dated evidence, trend score, profile
+fit score and reason, angle, hook, thesis, structure, research gaps,
+differentiation, saturation risk, and opportunity window. Discard incompatible
+popularity with a reason. Never copy or closely paraphrase reference material.
 
-Finish with the inferred keywords, resolved window/intent, the path to
-`*_trending_themes.csv`, the top 5 theme names only, and this next command:
+Finish with profile id, keywords, resolved window/intent, CSV path, top five
+adapted titles and themes, collection/quota counts, discards, limitations, and:
 
 ```text
 /research --themes-csv "<path-to-trending_themes.csv>" --rank 1

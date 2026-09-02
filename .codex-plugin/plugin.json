@@ -1,6 +1,6 @@
 {
   "name": "youtube-trend-finder",
-  "description": "Collect YouTube Data API evidence for a niche and guide agents to create curated trending-theme CSVs.",
+  "description": "Collect YouTube trend evidence and create proposals for a required editorial profile.",
   "version": "0.1.0",
   "author": {
     "name": "Local project"
@@ -16,8 +16,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "YouTube Trend Finder",
-    "shortDescription": "Find YouTube trending themes",
-    "longDescription": "Collect YouTube Data API evidence for a niche, preserve clear source boundaries, and guide an agent to produce a curated trending-theme CSV. This plugin does not generate video ideas or titles.",
+    "shortDescription": "Create profile-fit trend proposals",
+    "longDescription": "Require one editorial profile, collect broad YouTube evidence, score trend strength separately from profile fit, and guide an agent to produce original, profile-adapted proposals.",
     "developerName": "Local project",
     "category": "Productivity",
     "capabilities": [
@@ -25,9 +25,9 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Find YouTube trending themes for a niche",
-      "List the themes currently in demand",
-      "Collect US YouTube trend data"
+      "Find profile-fit YouTube video proposals for a niche",
+      "Rank current trends for an editorial profile",
+      "Collect US YouTube evidence with --profile nine-tenths"
     ],
     "brandColor": "#2563EB"
   }
