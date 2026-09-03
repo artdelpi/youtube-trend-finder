@@ -21,7 +21,7 @@ from youtube_trend_finder import (  # noqa: E402
 
 class EditorialRankingTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.profile = load_profile("nine-tenths").data
+        self.profile = load_profile("possumdotmov").data
         self.trends = [
             {
                 "codex_theme": "Hidden crime cases in a game fandom community",
@@ -49,8 +49,8 @@ class EditorialRankingTest(unittest.TestCase):
     def test_profile_reaches_generation_handoff(self) -> None:
         ranked = rank_trends_for_profile(self.trends[:1], self.profile)
         prompt = build_generation_prompt(self.profile, ranked, ["An existing title"])
-        self.assertIn("profile 'nine-tenths'", prompt)
-        self.assertIn('"id": "nine-tenths"', prompt)
+        self.assertIn("profile 'possumdotmov'", prompt)
+        self.assertIn('"id": "possumdotmov"', prompt)
         for field in ("title", "hook", "thesis", "structure", "profile_fit_score"):
             self.assertIn(field, prompt)
 
@@ -72,10 +72,10 @@ class EditorialRankingTest(unittest.TestCase):
         self.assertEqual(ranked["trend_score"], 65)
         self.assertEqual(ranked["trend_signal_gaps"], [])
 
-    def test_nine_tenths_shapes_title_angle_hook_and_structure(self) -> None:
+    def test_possumdotmov_shapes_title_angle_hook_and_structure(self) -> None:
         ranked = rank_trends_for_profile(self.trends[:1], self.profile)[0]
         suggestion = draft_suggestion(ranked, self.profile)
-        self.assertEqual(suggestion["profile_id"], "nine-tenths")
+        self.assertEqual(suggestion["profile_id"], "possumdotmov")
         self.assertIn("Darkest Cases", suggestion["title"])
         self.assertIn("case-file", suggestion["angle"])
         self.assertIn("documented cases", suggestion["hook"])

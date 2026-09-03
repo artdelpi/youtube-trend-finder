@@ -43,13 +43,13 @@ class CollectCliTest(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Unknown profile 'unknown'", result.stderr)
-        self.assertIn("nine-tenths", result.stderr)
+        self.assertIn("possumdotmov", result.stderr)
 
     def test_path_profile_fails_before_collection(self) -> None:
         result = self.run_collect(
             "topic",
             "--profile",
-            "../nine-tenths",
+            "../possumdotmov",
             "--days",
             "7",
             "--keyword",
@@ -86,7 +86,7 @@ class CollectCliTest(unittest.TestCase):
                     [
                         "topic",
                         "--profile",
-                        "nine-tenths",
+                        "possumdotmov",
                         "--days",
                         "7",
                         "--keyword",
@@ -98,10 +98,10 @@ class CollectCliTest(unittest.TestCase):
 
             self.assertEqual(code, 0)
             summary = json.loads(stdout.getvalue())
-            self.assertEqual(summary["profile_id"], "nine-tenths")
+            self.assertEqual(summary["profile_id"], "possumdotmov")
             context = json.loads(Path(summary["profile_context"]).read_text(encoding="utf-8"))
-            self.assertEqual(context["profile_id"], "nine-tenths")
-            self.assertEqual(context["editorial_profile"]["id"], "nine-tenths")
+            self.assertEqual(context["profile_id"], "possumdotmov")
+            self.assertEqual(context["editorial_profile"]["id"], "possumdotmov")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
 interface:
   display_name: "YouTube Trend Finder"
   short_description: "Turn trends into profile-fit video proposals"
-  default_prompt: "Use $youtube-trend-finder with --profile nine-tenths to collect current US YouTube evidence and create original, profile-adapted video proposals."
+  default_prompt: "Use $youtube-trend-finder with --profile possumdotmov to collect current US YouTube evidence and create original, profile-adapted video proposals."

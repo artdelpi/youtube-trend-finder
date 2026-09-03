@@ -21,14 +21,14 @@ List and validate profiles from the enclosing Slop Factory checkout:
 
 ```powershell
 py scripts/profiles.py list
-py scripts/profiles.py validate nine-tenths
+py scripts/profiles.py validate possumdotmov
 ```
 
 Run a collection. `--profile` is mandatory; there is no default or generic
 fallback:
 
 ```powershell
-py scripts/collect.py "horror channel" --profile nine-tenths --days 30 `
+py scripts/collect.py "horror channel" --profile possumdotmov --days 30 `
   --keyword "horror stories" `
   --keyword "scary true stories" `
   --keyword "analog horror" `
@@ -66,7 +66,7 @@ After building a candidate CSV from the evidence, apply profile scoring and
 create the generation handoff:
 
 ```powershell
-py scripts/editorialize.py --profile nine-tenths --input "<trend-candidates.csv>"
+py scripts/editorialize.py --profile possumdotmov --input "<trend-candidates.csv>"
 ```
 
 ## Agent Prompt
@@ -74,7 +74,7 @@ py scripts/editorialize.py --profile nine-tenths --input "<trend-candidates.csv>
 Use this prompt with Codex or Claude:
 
 ```text
-Use $youtube-trend-finder with --profile nine-tenths to collect current YouTube evidence for internet horror and online communities in the US with --window compare and --intent production. Infer broad English keywords, read all raw evidence, score trend strength separately from profile fit, discard incompatible popularity with reasons, and create original profile-adapted proposals in `*_trending_themes.csv`.
+Use $youtube-trend-finder with --profile possumdotmov to collect current YouTube evidence for internet horror and online communities in the US with --window compare and --intent production. Infer broad English keywords, read all raw evidence, score trend strength separately from profile fit, discard incompatible popularity with reasons, and create original profile-adapted proposals in `*_trending_themes.csv`.
 ```
 
 ## Editorial profile contract
@@ -94,7 +94,7 @@ prove which profile was used.
 ## Updating reference research
 
 ```powershell
-py scripts/collect_reference_channel.py --profile nine-tenths --refresh-captions
+py scripts/collect_reference_channel.py --profile possumdotmov --refresh-captions
 ```
 
 This traverses every page of the public uploads playlist, checks public Shorts
