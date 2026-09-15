@@ -79,7 +79,7 @@ class CollectCliTest(unittest.TestCase):
                 },
             }
             stdout = io.StringIO()
-            with mock.patch.object(module, "collect", return_value=result), contextlib.redirect_stdout(
+            with mock.patch.object(module, "collect", return_value=result) as collect_mock, contextlib.redirect_stdout(
                 stdout
             ):
                 code = module.main(
@@ -93,10 +93,12 @@ class CollectCliTest(unittest.TestCase):
                         "test",
                         "--out-dir",
                         temp,
+                        "--no-timestamp",
                     ]
                 )
 
             self.assertEqual(code, 0)
+            self.assertFalse(collect_mock.call_args.kwargs["timestamped_output"])
             summary = json.loads(stdout.getvalue())
             self.assertEqual(summary["profile_id"], "possumdotmov")
             context = json.loads(Path(summary["profile_context"]).read_text(encoding="utf-8"))

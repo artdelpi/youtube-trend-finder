@@ -28,7 +28,7 @@ Run a collection. `--profile` is mandatory; there is no default or generic
 fallback:
 
 ```powershell
-py scripts/collect.py "horror channel" --profile possumdotmov --days 30 `
+py scripts/collect.py "horror channel" --profile possumdotmov-lobby --days 30 `
   --keyword "horror stories" `
   --keyword "scary true stories" `
   --keyword "analog horror" `
@@ -54,7 +54,7 @@ evergreen      durable subjects
 news-reactive  current releases and named entities
 ```
 
-The collector writes timestamped files under `outputs/`:
+Standalone raw collection writes timestamped files under `outputs/`:
 
 ```text
 outputs/YYYYMMDD-HHMMSS/<topic>-api_videos.csv
@@ -66,7 +66,7 @@ After building a candidate CSV from the evidence, apply profile scoring and
 create the generation handoff:
 
 ```powershell
-py scripts/editorialize.py --profile possumdotmov --input "<trend-candidates.csv>"
+py scripts/editorialize.py --profile possumdotmov-lobby --input "<trend-candidates.csv>"
 ```
 
 ## Agent Prompt
@@ -74,7 +74,7 @@ py scripts/editorialize.py --profile possumdotmov --input "<trend-candidates.csv
 Use this prompt with Codex or Claude:
 
 ```text
-Use $youtube-trend-finder with --profile possumdotmov to collect current YouTube evidence for internet horror and online communities in the US with --window compare and --intent production. Infer broad English keywords, read all raw evidence, score trend strength separately from profile fit, discard incompatible popularity with reasons, and create original profile-adapted proposals in `*_trending_themes.csv`.
+Use $youtube-trend-finder with --profile possumdotmov-lobby to collect current YouTube evidence for internet horror and online communities in the US with --window compare and --intent production. Infer broad English keywords, read all raw evidence, score trend strength separately from profile fit, discard incompatible popularity with reasons, and create original profile-adapted proposals in `trend_ideas.csv` inside one dated, descriptive run folder.
 ```
 
 ## Editorial profile contract
@@ -94,7 +94,7 @@ prove which profile was used.
 ## Updating reference research
 
 ```powershell
-py scripts/collect_reference_channel.py --profile possumdotmov --refresh-captions
+py scripts/collect_reference_channel.py --profile possumdotmov-lobby --refresh-captions
 ```
 
 This traverses every page of the public uploads playlist, checks public Shorts
@@ -131,3 +131,39 @@ py -m unittest discover -s tests
 ```
 
 The root `collector.py` is a compatibility shim so existing prompts that run `import collector as c` still work.
+
+## Proposal count and channel memory
+
+`editorialize.py --top 15` is the default generation handoff: up to 15 distinct,
+evidence-backed proposals, with an explicit shortfall if fewer qualify. It
+rechecks the enclosing `tracking/covered_subjects.txt` for the selected profile.
+Already covered exact subjects stay ranked and produce notices with topic, date
+and run. Similar wording is only `related`; explicit `blocked` entries remain
+excluded. Preserve `tracking_*` in the final CSV and recheck after subject edits.
+
+## Output location
+
+A complete Slop Factory run owns exactly one directory:
+`results/trends/YYYYMMDD-HHMMSS-<profile>-<topic-slug>/`.
+The date, time and English topic description identify each run, including reruns.
+Open **trend_ideas.csv** directly inside that directory for the ranked proposals.
+`trend_ideas.md` is the readable companion; `evidence_report.md` records evidence
+and limitations. All raw collections and working files stay in `_internal/`.
+Write output names, navigation, reports and proposals in English.
+
+From the enclosing Slop Factory root, use `py scripts/trend_run.py init` with
+`<topic> --profile <id> --window <window> --intent <intent> --top <top>` once.
+Keep its absolute `run_dir` through every comparison window, expansion and resume.
+Collect with `--out-dir "<run_dir>/_internal/youtube/<batch>" --no-timestamp`,
+using distinct batches such as `7d`, `30d`, `60d` and `expansion-01`.
+Never create sibling timestamp folders for individual collections.
+After editorial review and coverage annotation, publish with:
+
+```powershell
+py scripts/trend_run.py finish --run-dir "<run_dir>" --csv "<run_dir>/_internal/proposals.csv" --report "<run_dir>/_internal/report.md"
+```
+
+The finalizer validates the handoff and updates `results/trends/README.md`.
+Lead the response with the run folder and **trend_ideas.csv** link.
+The standalone raw collector keeps its timestamped `outputs/` default; that is
+not the output layout for a complete agent run.

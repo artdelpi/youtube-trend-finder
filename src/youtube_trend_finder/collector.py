@@ -133,13 +133,16 @@ def write_outputs(
     rows: list[dict[str, Any]],
     report: Mapping[str, Any],
     out_dir: str | Path,
+    timestamped_output: bool = True,
 ) -> tuple[Path, Path]:
     timestamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    output_dir = Path(out_dir) / timestamp
+    output_dir = Path(out_dir) / timestamp if timestamped_output else Path(out_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     base = output_dir / slugify(topic)
     csv_path = base.with_name(base.name + "-api_videos.csv")
     json_path = base.with_name(base.name + "-api_payload.json")
+    if not timestamped_output and (csv_path.exists() or json_path.exists()):
+        raise FileExistsError(f"Collection already exists in {output_dir}; use a new batch directory")
     fields = list(rows[0].keys()) if rows else ["api_video_id"]
 
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
@@ -161,7 +164,12 @@ def collect(
     max_results_per_page: int = 50,
     pages_per_keyword: int = 2,
     out_dir: str | Path = "outputs",
+    timestamped_output: bool = True,
 ) -> dict[str, Any]:
+    if not timestamped_output:
+        for suffix in ("-api_videos.csv", "-api_payload.json", "-profile_context.json"):
+            if (Path(out_dir) / (slugify(topic) + suffix)).exists():
+                raise FileExistsError(f"Collection already exists in {out_dir}; use a new batch directory")
     key = load_api_key()
     now = dt.datetime.now(dt.timezone.utc)
     published_after = iso_utc(now - dt.timedelta(days=days))
@@ -250,6 +258,5 @@ def collect(
         "estimated_quota_units": sum(call["quota_units"] for call in calls),
         "rows": rows,
     }
-    csv_path, json_path = write_outputs(topic, rows, report, out_dir)
+    csv_path, json_path = write_outputs(topic, rows, report, out_dir, timestamped_output)
     return {"csv": str(csv_path), "json": str(json_path), "report": report}
-

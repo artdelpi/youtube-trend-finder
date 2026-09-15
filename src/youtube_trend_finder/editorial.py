@@ -300,6 +300,7 @@ def build_generation_prompt(
     profile: Mapping[str, Any],
     ranked_trends: Iterable[Mapping[str, Any]],
     published_titles: Iterable[str] = (),
+    *, top: int = 15,
 ) -> str:
     """Build the mandatory handoff from deterministic ranking to agent generation."""
 
@@ -311,6 +312,11 @@ def build_generation_prompt(
     fields = ", ".join(profile["output"]["required_fields"])
     return (
         f"Generate editorial video proposals for profile '{profile['id']}'.\n"
+        f"Return up to {top} distinct evidence-backed proposals, ranked 1 through N; "
+        "never pad missing evidence or count alternate titles as separate ideas. "
+        "If fewer qualify, report the shortfall. Preserve tracking_* fields: covered "
+        "means notify with subject, date and run, never exclude or demote for coverage. "
+        "Related means possible overlap, not proof of the same topic. Honor explicit blocked entries.\n"
         "Treat trend evidence as volatile execution data and profile rules as stable "
         "editorial identity. Discard incompatible rows even when popular. Apply the profile "
         "to selection, fit score, angle, title, hook, thesis, structure, differentiation, "

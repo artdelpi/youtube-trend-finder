@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -41,12 +42,41 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--profile", required=True)
     parser.add_argument("--input", required=True, help="Candidate CSV or JSON.")
+    parser.add_argument("--top", type=int, default=15, help="Maximum proposals (default: 15); never pad weak evidence.")
     parser.add_argument(
         "--out-dir",
         default=None,
         help="Output directory. Defaults beside the input file.",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.top < 1:
+        parser.error("--top must be positive")
+    return args
+
+
+def annotate_coverage(rows: list[dict[str, Any]], profile: Any) -> None:
+    """Recheck the enclosing channel ledger on every generation handoff."""
+    workspace = profile.path.parents[2]
+    script = workspace / "scripts" / "coverage.py"
+    ledger = workspace / "tracking" / "covered_subjects.txt"
+    if not script.is_file() or not ledger.is_file():
+        raise ValueError("Coverage checker and tracking/covered_subjects.txt are required before proposals.")
+    spec = importlib.util.spec_from_file_location("slop_coverage", script)
+    assert spec and spec.loader
+    coverage = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(coverage)
+    entries = coverage.read_ledger(ledger)
+    for row in rows:
+        subject = row.get("codex_theme") or row.get("theme") or row.get("topic")
+        if not subject:
+            raise ValueError("Every candidate needs a subject in theme, codex_theme or topic for coverage checking.")
+        result = coverage.check_subject(str(subject), entries, profile.profile_id)
+        best = result["matches"][0]["entry"] if result["matches"] else {}
+        row.update(
+            tracking_status=result["verdict"], tracking_match=best.get("subject", ""),
+            tracking_date=best.get("date", ""), tracking_run_id=best.get("run_id", ""),
+            tracking_advice=result["advice"],
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -59,12 +89,20 @@ def main(argv: list[str] | None = None) -> int:
         profile = load_profile(args.profile)
         reference_titles = load_reference_titles(profile)
         rows = _read_rows(source)
+        annotate_coverage(rows, profile)
     except (ProfileError, OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
     ranked = rank_trends_for_profile(rows, profile.data, reference_titles)
+    for item in ranked:
+        if item["tracking_status"] == "blocked":
+            item.update(discarded=True, discard_reason="Explicit channel tracking block")
+            item.pop("profile_rank", None)
     compatible = [item for item in ranked if not item["discarded"]]
+    for rank, item in enumerate(compatible, start=1):
+        item["profile_rank"] = rank
+    selected = compatible[:args.top]
     drafts = [
         {
             **draft_suggestion(item, profile.data),
@@ -72,8 +110,9 @@ def main(argv: list[str] | None = None) -> int:
             "profile_fit_score": item["profile_fit_score"],
             "combined_score": item["combined_score"],
             "profile_fit_reason": item["profile_fit_reason"],
+            **{key: value for key, value in item.items() if key.startswith("tracking_")},
         }
-        for item in compatible
+        for item in selected
     ]
     out_dir = Path(args.out_dir).resolve() if args.out_dir else source.parent
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -88,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(drafts, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     prompt_path.write_text(
-        build_generation_prompt(profile.data, compatible, reference_titles) + "\n",
+        build_generation_prompt(profile.data, selected, reference_titles, top=args.top) + "\n",
         encoding="utf-8",
     )
     print(
@@ -98,6 +137,14 @@ def main(argv: list[str] | None = None) -> int:
                 "input_rows": len(rows),
                 "compatible_rows": len(compatible),
                 "discarded_rows": len(ranked) - len(compatible),
+                "requested_proposals": args.top,
+                "proposal_rows": len(selected),
+                "shortfall": max(0, args.top - len(selected)),
+                "coverage_notices": [
+                    {"subject": item.get("codex_theme") or item.get("theme") or item.get("topic"),
+                     **{key: value for key, value in item.items() if key.startswith("tracking_")}}
+                    for item in ranked if item["tracking_status"] != "clear"
+                ],
                 "ranked": str(ranked_path),
                 "drafts": str(drafts_path),
                 "generation_prompt": str(prompt_path),

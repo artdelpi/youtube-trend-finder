@@ -2,11 +2,38 @@ from __future__ import annotations
 
 import datetime as dt
 import unittest
+import tempfile
+from pathlib import Path
+from unittest import mock
 
 import collector
 
 
 class CollectorHelpersTest(unittest.TestCase):
+    def test_direct_batch_output_and_legacy_timestamp_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for timestamped in [True, False]:
+                batch = root / str(timestamped)
+                csv_path, json_path = collector.write_outputs(
+                    'Topic', [], {}, batch, timestamped_output=timestamped)
+                self.assertEqual(csv_path.parent.parent if timestamped else csv_path.parent, batch)
+                self.assertEqual(json_path.parent, csv_path.parent)
+            original = csv_path.read_bytes()
+            with self.assertRaises(FileExistsError):
+                collector.write_outputs('Topic', [], {}, batch, timestamped_output=False)
+            self.assertEqual(csv_path.read_bytes(), original)
+
+    def test_existing_batch_fails_before_api_access(self) -> None:
+        from youtube_trend_finder import collector as implementation
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / 'topic-profile_context.json').write_text('{}', encoding='utf-8')
+            with mock.patch.object(implementation, 'load_api_key') as key:
+                with self.assertRaises(FileExistsError):
+                    implementation.collect('Topic', ['topic'], 7, out_dir=temp,
+                                           timestamped_output=False)
+                key.assert_not_called()
+
     def test_slugify_falls_back_to_trend(self) -> None:
         self.assertEqual(collector.slugify("!!!"), "trend")
 

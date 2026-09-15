@@ -34,6 +34,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--language", default="en", help="Relevance language.")
     parser.add_argument("--pages-per-keyword", type=int, default=2)
     parser.add_argument("--out-dir", default="outputs")
+    parser.add_argument("--no-timestamp", action="store_true",
+                        help="Write directly into --out-dir; use a distinct directory per run batch.")
     return parser.parse_args(argv)
 
 
@@ -53,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         language=args.language,
         pages_per_keyword=args.pages_per_keyword,
         out_dir=args.out_dir,
+        timestamped_output=not args.no_timestamp,
     )
     report = result["report"]
     context_path = Path(result["csv"]).with_name(

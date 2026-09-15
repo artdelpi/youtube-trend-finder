@@ -69,3 +69,39 @@ outputs/                     Generated data, ignored by git
 - Preserve source boundaries in CSV fields: `api_*` from YouTube, `collector_*` from code, and `codex_*` from agent inference.
 - Do not commit `.env`, generated `outputs/`, `__pycache__/`, or `.pyc` files.
 - Keep the root `collector.py` shim unless all agent prompts have migrated to the package or CLI.
+
+## Proposal count and channel memory
+
+`editorialize.py --top 15` is the default generation handoff: up to 15 distinct,
+evidence-backed proposals, with an explicit shortfall if fewer qualify. It
+rechecks the enclosing `tracking/covered_subjects.txt` for the selected profile.
+Already covered exact subjects stay ranked and produce notices with topic, date
+and run. Similar wording is only `related`; explicit `blocked` entries remain
+excluded. Preserve `tracking_*` in the final CSV and recheck after subject edits.
+
+## Output location
+
+A complete Slop Factory run owns exactly one directory:
+`results/trends/YYYYMMDD-HHMMSS-<profile>-<topic-slug>/`.
+The date, time and English topic description identify each run, including reruns.
+Open **trend_ideas.csv** directly inside that directory for the ranked proposals.
+`trend_ideas.md` is the readable companion; `evidence_report.md` records evidence
+and limitations. All raw collections and working files stay in `_internal/`.
+Write output names, navigation, reports and proposals in English.
+
+From the enclosing Slop Factory root, use `py scripts/trend_run.py init` with
+`<topic> --profile <id> --window <window> --intent <intent> --top <top>` once.
+Keep its absolute `run_dir` through every comparison window, expansion and resume.
+Collect with `--out-dir "<run_dir>/_internal/youtube/<batch>" --no-timestamp`,
+using distinct batches such as `7d`, `30d`, `60d` and `expansion-01`.
+Never create sibling timestamp folders for individual collections.
+After editorial review and coverage annotation, publish with:
+
+```powershell
+py scripts/trend_run.py finish --run-dir "<run_dir>" --csv "<run_dir>/_internal/proposals.csv" --report "<run_dir>/_internal/report.md"
+```
+
+The finalizer validates the handoff and updates `results/trends/README.md`.
+Lead the response with the run folder and **trend_ideas.csv** link.
+The standalone raw collector keeps its timestamped `outputs/` default; that is
+not the output layout for a complete agent run.
