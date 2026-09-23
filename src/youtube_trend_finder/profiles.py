@@ -146,11 +146,16 @@ def validate_editorial_profile(
         "titles.punctuation",
         "adaptation.saturation_policy",
         "adaptation.evidence_policy",
+        "presentation.goal",
+        "presentation.selection_rule",
+        "presentation.weak_premise_rule",
+        "presentation.sensationalism_definition",
         "reference.channel",
         "reference.url",
         "reference.collected_at",
         "reference.catalog_file",
         "reference.analysis_file",
+        "presentation_references.analysis_file",
     )
     for path in required_strings:
         value = _require_path(payload, path, str)
@@ -210,6 +215,86 @@ def validate_editorial_profile(
         ) or sum(weights.values()) <= 0:
             raise ProfileError(f"Editorial profile field '{path}' has invalid weights.")
 
+    archetypes = _require_path(payload, "presentation.archetypes", list)
+    if not archetypes:
+        raise ProfileError("Editorial profile field 'presentation.archetypes' cannot be empty.")
+    archetype_ids: set[str] = set()
+    for index, archetype in enumerate(archetypes):
+        if not isinstance(archetype, Mapping):
+            raise ProfileError(
+                f"Editorial profile presentation archetype {index} must be an object."
+            )
+        for key in (
+            "id",
+            "reference_channel",
+            "draft_pattern",
+            "title_mechanic",
+            "approach",
+            "use_when",
+            "reject_when",
+        ):
+            value = archetype.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ProfileError(
+                    f"Editorial profile presentation archetype {index} field '{key}' must be a non-empty string."
+                )
+        identifier = str(archetype["id"])
+        if not PROFILE_NAME.fullmatch(identifier) or identifier in archetype_ids:
+            raise ProfileError(
+                "Editorial profile presentation archetype ids must be unique lowercase slugs."
+            )
+        archetype_ids.add(identifier)
+        ceiling = archetype.get("sensationalism_ceiling")
+        if (
+            not isinstance(ceiling, int)
+            or isinstance(ceiling, bool)
+            or not 0 <= ceiling <= 100
+        ):
+            raise ProfileError(
+                f"Editorial profile presentation archetype {index} sensationalism_ceiling must be 0-100."
+            )
+
+    references = _require_path(payload, "presentation_references", dict)
+    title_limit = references.get("title_limit")
+    excerpt_words = references.get("caption_excerpt_words")
+    if not isinstance(title_limit, int) or isinstance(title_limit, bool) or title_limit < 1:
+        raise ProfileError("Editorial profile presentation_references.title_limit must be positive.")
+    if (
+        not isinstance(excerpt_words, int)
+        or isinstance(excerpt_words, bool)
+        or not 40 <= excerpt_words <= 250
+    ):
+        raise ProfileError(
+            "Editorial profile presentation_references.caption_excerpt_words must be 40-250."
+        )
+    channels = references.get("channels")
+    if not isinstance(channels, list) or not channels:
+        raise ProfileError(
+            "Editorial profile presentation_references.channels must be a non-empty list."
+        )
+    channel_ids: set[str] = set()
+    for index, channel in enumerate(channels):
+        if not isinstance(channel, Mapping):
+            raise ProfileError(
+                f"Editorial profile presentation reference {index} must be an object."
+            )
+        channel_id = channel.get("id")
+        url = channel.get("url")
+        video_ids = channel.get("caption_video_ids")
+        if not isinstance(channel_id, str) or not channel_id.strip() or channel_id in channel_ids:
+            raise ProfileError("Presentation reference channel ids must be non-empty and unique.")
+        if not isinstance(url, str) or not url.startswith("https://www.youtube.com/@"):
+            raise ProfileError("Presentation reference channel URLs must be public YouTube handles.")
+        if (
+            not isinstance(video_ids, list)
+            or not video_ids
+            or any(not isinstance(item, str) or not item.strip() for item in video_ids)
+        ):
+            raise ProfileError(
+                "Each presentation reference needs non-empty caption_video_ids."
+            )
+        channel_ids.add(channel_id)
+
     return dict(payload)
 
 
@@ -248,11 +333,21 @@ def load_profile(
     )
 
 
+def _profile_data_path(profile: LoadedProfile, relative: str, label: str) -> Path:
+    value = Path(relative)
+    if value.is_absolute():
+        raise ProfileError(f"{label} path must be relative to the profile directory.")
+    profile_dir = profile.path.parent.resolve()
+    target = (profile_dir / value).resolve()
+    allowed_roots = (profile_dir, (profile_dir / "references").resolve())
+    if not any(root == target or root in target.parents for root in allowed_roots):
+        raise ProfileError(f"{label} path must stay inside the profile directory.")
+    return target
+
+
 def load_reference_titles(profile: LoadedProfile) -> list[str]:
     relative = profile.data["reference"]["catalog_file"]
-    path = (profile.path.parent / relative).resolve()
-    if profile.path.parent not in path.parents:
-        raise ProfileError("Reference catalog path must stay inside the profile directory.")
+    path = _profile_data_path(profile, relative, "Reference catalog")
     if not path.is_file():
         raise ProfileError(f"Reference catalog does not exist: {path}")
     try:
@@ -264,3 +359,17 @@ def load_reference_titles(profile: LoadedProfile) -> list[str]:
         raise ProfileError("Reference catalog must contain a 'publications' list.")
     titles = [item.get("title", "") for item in publications if isinstance(item, Mapping)]
     return [title for title in titles if isinstance(title, str) and title.strip()]
+
+
+def load_presentation_reference_analysis(profile: LoadedProfile) -> dict[str, Any]:
+    relative = profile.data["presentation_references"]["analysis_file"]
+    path = _profile_data_path(profile, relative, "Presentation reference analysis")
+    if not path.is_file():
+        raise ProfileError(f"Presentation reference analysis does not exist: {path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProfileError(f"Could not read presentation reference analysis: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("channels"), list):
+        raise ProfileError("Presentation reference analysis must contain a 'channels' list.")
+    return payload

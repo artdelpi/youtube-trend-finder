@@ -110,6 +110,7 @@ def build_video_row(
         "api_url": f"https://www.youtube.com/watch?v={video_id}",
         "api_title": snippet.get("title", ""),
         "api_channel": snippet.get("channelTitle", ""),
+        "api_channel_id": snippet.get("channelId", ""),
         "api_published_at": iso_utc(published),
         "api_description": snippet.get("description", ""),
         "api_tags": "|".join(snippet.get("tags", [])),

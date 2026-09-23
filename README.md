@@ -104,6 +104,24 @@ in the enclosing repository's ignored `.slash_tmp/`; compact catalog, coverage,
 failures, and corpus measurements are written to paths declared by the profile.
 Missing transcripts are recorded and do not stop the remaining analysis.
 
+Refresh cross-channel presentation research separately:
+
+```powershell
+py scripts/collect_presentation_references.py --profile possumdotmov --refresh-captions
+```
+
+This bounded, low-bandwidth pass reads recent title metadata and only declared
+caption openings from each profile reference. It never downloads video, audio,
+or thumbnails. The resulting compact analysis teaches title/promise mechanics:
+case ladders, thematic lenses, answerable mysteries, quantified stakes, and
+extreme comparisons. `editorialize.py` then scores those options per trend and
+adds presentation archetype, sensationalism potential, rationale, title
+mechanic, approach, and reference evidence to the generation handoff.
+
+Counts, lists, `EVERY`, kill counts, and superlatives require supported units.
+Identity-only “who made/is behind X” proposals are rejected unless identity
+changes a documented consequence, mechanism, or central contradiction.
+
 ## Project Structure
 
 ```text
@@ -114,7 +132,7 @@ skills/                      Codex plugin skill source
 .codex/prompts/              Codex reusable prompt
 .codex-plugin/               Codex plugin metadata
 scripts/                     Command-line entry points
-src/youtube_trend_finder/    Collection, safe profile loading, ranking, and reference analysis
+src/youtube_trend_finder/    Collection, safe profile loading, ranking, and presentation analysis
 tests/                       Unit tests for pure helpers
 outputs/                     Generated API and curation files
 ```
@@ -140,6 +158,55 @@ rechecks the enclosing `tracking/covered_subjects.txt` for the selected profile.
 Already covered exact subjects stay ranked and produce notices with topic, date
 and run. Similar wording is only `related`; explicit `blocked` entries remain
 excluded. Preserve `tracking_*` in the final CSV and recheck after subject edits.
+
+## Viral-recycle lane
+
+Beside the trend proposals, a run proposes up to `--recycle` films (default 5)
+that each answer one recent breakout video in the niche with our own film on
+the same subject: same question, the conclusions its audience rewarded, our
+research, order, register and words, plus what its comment section says it got
+wrong or left out.
+
+- `scripts/viral_scan.py --run-dir <run> --profile <id>` reads every batch of
+  the run, screens format and profile exclusions without quota, then measures
+  the 40 fastest videos from the last 45 days against the median of their own
+  channel's recent uploads (`collector_outlier_ratio`; `breakout` is 5x or
+  more, `strong` 2x). About 70 units. Writes `_internal/viral/viral_candidates.csv`.
+- `scripts/viral_study.py --run-dir <run> --video <id>` writes
+  `_internal/viral/<id>/`: thumbnail, captions, about 400 comments, chapters,
+  the most-replayed curve, `signals.json` (comment piles, commented timestamps,
+  replayed moments, narration lines commenters quoted back) and a pending
+  `study.md`. About 5 units. It never downloads the video; `/watch` frames need
+  an `allow` from the researcher's `check_download.py`.
+- The format screen is lexical (`eligible`, `needs-review`, `rejected`); the
+  agent confirms it from the transcript. Commentary, theory, compilation,
+  ranking, documentary, essay, review and reaction are recyclable; the work
+  itself, trailers, music, gameplay, performances and raw news clips are not.
+- Originality is enforced twice: `trend_run.py finish` rejects a proposal whose
+  title shares more than half its content words with the reference title or
+  whose text repeats eight words of the reference transcript, and
+  `scripts/check_recycle_copy.py` runs the same transcript check on a film's
+  brief.
+- Thresholds are named constants at the top of
+  `src/youtube_trend_finder/viral.py`, pinned by `tests/test_viral.py`.
+
+### What the recycle screen was calibrated against
+
+Measured on the 2026-09-15 lobby run's 2,108 collected videos (2026-09-23):
+
+- Original-work words (`trailer`, `gameplay`, `vlog`) count **in the title
+  only**. Read from descriptions and tags they rejected commentary videos:
+  a games-news segment was thrown out for linking a trailer in its
+  description, and reviews tag themselves `gameplay` as a matter of routine.
+- `commentary` must not follow `no`: "Gameplay No Commentary" had screened as
+  a commentary video.
+- An original-work title whose commentary words sit only in the description
+  goes to review, not eligibility: an exclusive interview described as
+  "drama" and "reaction" had scored 939x and screened eligible.
+- Captions come from one direct request for the chosen track. Letting yt-dlp
+  write every English track sent one request per track, and the second
+  answered HTTP 429; a single GET of the same track URL succeeded seconds
+  later.
 
 ## Output location
 

@@ -10,8 +10,16 @@ from youtube_trend_finder.profiles import (
     ProfileError,
     list_profiles,
     load_profile,
+    load_presentation_reference_analysis,
     load_reference_titles,
     validate_editorial_profile,
+)
+from youtube_trend_finder.presentation import (
+    analyze_caption_opening,
+    analyze_presentation_channel,
+    analyze_title_surface,
+    classify_title,
+    presentation_options_for_trend,
 )
 
 __all__ = [
@@ -23,9 +31,13 @@ __all__ = [
     "evaluate_profile_fit",
     "list_profiles",
     "load_profile",
+    "load_presentation_reference_analysis",
     "load_reference_titles",
+    "analyze_caption_opening",
+    "analyze_presentation_channel",
+    "analyze_title_surface",
+    "classify_title",
+    "presentation_options_for_trend",
     "rank_trends_for_profile",
     "validate_editorial_profile",
 ]
-
-__all__ = ["collect"]

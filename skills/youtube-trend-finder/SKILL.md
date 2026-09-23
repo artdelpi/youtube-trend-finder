@@ -114,7 +114,8 @@ writing exact subjects.
 
 Read `*-profile-ranked.json`, `*-profile-drafts.json`, and
 `*-generation-prompt.md`. Deterministic scoring separates trend strength from
-profile fit. The profile must visibly affect:
+profile fit and separately ranks evidence-derived presentation options. The
+profile must visibly affect:
 
 - selection and rejection;
 - profile-fit score and rationale;
@@ -124,6 +125,13 @@ profile fit. The profile must visibly affect:
 - video structure;
 - differentiation from the complete reference catalog;
 - saturation risk and opportunity window.
+
+For each candidate, compare the five presentation archetypes declared by the
+profile: escalating case ladder, familiar-work thematic lens, answerable
+mystery, quantified stakes, and extreme comparison. A kill count, top/bottom
+list, `EVERY` survey, hard number, or superlative is eligible only when evidence
+supports its units and boundary. Reject a creator/identity lookup unless the
+identity changes a documented consequence, mechanism, or central contradiction.
 
 Discard incompatible popularity with a reason. Do not hide discarded candidates.
 Crowding is a risk label, not an automatic rejection.
@@ -151,12 +159,49 @@ compatibility and include:
 - `structure`
 - `research_or_validation_needed`
 - `difference_from_existing_content`
+- `presentation_archetype`
+- `sensationalism_potential_score`
+- `sensationalism_rationale`
+- `title_mechanic`
+- `approach`
+- `reference_pattern_evidence`
 - `saturation_risk`
 - `opportunity_window`
 
 Keep relevant raw evidence fields too. Never copy or closely paraphrase a
 reference title or transcript. Extract recurring grammar and structure while
 keeping proposals original.
+
+## Viral-recycle lane
+
+Beside the trend proposals, a run proposes up to `--recycle` films (default 5)
+that each answer one recent breakout video in the niche with our own film on
+the same subject: same question, the conclusions its audience rewarded, our
+research, order, register and words, plus what its comment section says it got
+wrong or left out.
+
+- `scripts/viral_scan.py --run-dir <run> --profile <id>` reads every batch of
+  the run, screens format and profile exclusions without quota, then measures
+  the 40 fastest videos from the last 45 days against the median of their own
+  channel's recent uploads (`collector_outlier_ratio`; `breakout` is 5x or
+  more, `strong` 2x). About 70 units. Writes `_internal/viral/viral_candidates.csv`.
+- `scripts/viral_study.py --run-dir <run> --video <id>` writes
+  `_internal/viral/<id>/`: thumbnail, captions, about 400 comments, chapters,
+  the most-replayed curve, `signals.json` (comment piles, commented timestamps,
+  replayed moments, narration lines commenters quoted back) and a pending
+  `study.md`. About 5 units. It never downloads the video; `/watch` frames need
+  an `allow` from the researcher's `check_download.py`.
+- The format screen is lexical (`eligible`, `needs-review`, `rejected`); the
+  agent confirms it from the transcript. Commentary, theory, compilation,
+  ranking, documentary, essay, review and reaction are recyclable; the work
+  itself, trailers, music, gameplay, performances and raw news clips are not.
+- Originality is enforced twice: `trend_run.py finish` rejects a proposal whose
+  title shares more than half its content words with the reference title or
+  whose text repeats eight words of the reference transcript, and
+  `scripts/check_recycle_copy.py` runs the same transcript check on a film's
+  brief.
+- Thresholds are named constants at the top of
+  `src/youtube_trend_finder/viral.py`, pinned by `tests/test_viral.py`.
 
 ## Reference research
 
@@ -172,6 +217,27 @@ Lives tabs, fetches batched public metadata, caches available English captions i
 the enclosing repository's ignored `.slash_tmp/`, records every missing
 transcript, and writes compact catalog/analysis JSON at profile-declared paths.
 One failed or unavailable transcript must not abort the corpus.
+
+## Presentation reference research
+
+Profiles may also declare several presentation references. Refresh their
+bounded title windows and small caption-opening samples with:
+
+```powershell
+py scripts/collect_presentation_references.py --profile <profile_id> --refresh-captions
+```
+
+This collector reads at most the configured number of recent Videos-tab title
+records and the first configured number of words from declared caption samples.
+It uses exact English subtitle languages, stores raw VTT files only in ignored
+`.slash_tmp/`, and never downloads video, audio, or thumbnails. Captions serve
+only to test how an opening pays off its title. Runtime, editing, and visuals are
+outside this analysis.
+
+`editorialize.py` loads the compact analysis and crosses every trend with all
+presentation archetypes. `sensationalism_potential_score` is truthful packaging
+headroom from 0-100, separate from trend strength and profile fit. Never treat
+it as factual probability or permission to invent stakes.
 
 ## Final response
 

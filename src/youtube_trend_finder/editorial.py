@@ -6,6 +6,8 @@ import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from youtube_trend_finder.presentation import presentation_options_for_trend
+
 
 TOKEN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?", re.IGNORECASE)
 
@@ -225,6 +227,7 @@ def rank_trends_for_profile(
 
         trend_score = sum(components.values()) / len(components)
         fit = evaluate_profile_fit(row, profile, published_titles)
+        presentation = presentation_options_for_trend(row, profile)
         combined = (
             trend_score * float(ranking_weights["trend"])
             + fit["profile_fit_score"] * float(ranking_weights["profile"])
@@ -240,6 +243,9 @@ def rank_trends_for_profile(
                 "trend_signal_gaps": gaps,
                 "combined_score": round(combined, 2),
                 "profile_id": profile["id"],
+                "presentation_signals": presentation["signals"],
+                "presentation_warnings": presentation["warnings"],
+                "presentation_options": presentation["options"],
                 "discarded": not fit["profile_compatible"],
                 "discard_reason": (
                     fit["profile_fit_reason"]
@@ -283,9 +289,24 @@ def draft_suggestion(
     hooks = profile["narrative"]["hook_rules"]
     theses = profile["framing"]["thesis_types"]
     angles = profile["framing"]["angles"]
+    presentation = trend.get("presentation_options")
+    if not isinstance(presentation, list):
+        presentation = presentation_options_for_trend(trend, profile)["options"]
+    selected_presentation = presentation[0] if presentation else {}
+    archetype = next(
+        (
+            item
+            for item in profile.get("presentation", {}).get("archetypes", [])
+            if item.get("id") == selected_presentation.get("presentation_archetype")
+        ),
+        {},
+    )
+    draft_pattern = str(archetype.get("draft_pattern") or patterns[0])
+    presentation_fit = int(selected_presentation.get("fit_score", 0))
+    presentation_ceiling = int(selected_presentation.get("sensationalism_ceiling", 0))
     return {
         "profile_id": profile["id"],
-        "title": _format(patterns[0], subject),
+        "title": _format(draft_pattern, subject),
         "alternate_titles": [_format(item, subject) for item in patterns[1:4]],
         "source_trend": subject,
         "angle": _format(angles[0], subject),
@@ -293,6 +314,21 @@ def draft_suggestion(
         "thesis": _format(theses[0], subject),
         "structure": list(profile["narrative"]["development"]),
         "fit_reason": trend.get("profile_fit_reason", "profile rules applied"),
+        "presentation_archetype": selected_presentation.get(
+            "presentation_archetype", "unresolved"
+        ),
+        "sensationalism_potential_score": selected_presentation.get(
+            "sensationalism_potential_score", 0
+        ),
+        "sensationalism_rationale": (
+            f"Presentation fit {presentation_fit}/100 with truthful intensity capped at "
+            f"{presentation_ceiling}/100 until its evidence requirements are met."
+        ),
+        "title_mechanic": selected_presentation.get("title_mechanic", ""),
+        "approach": selected_presentation.get("approach", ""),
+        "reference_pattern_evidence": selected_presentation.get(
+            "reference_channel", ""
+        ),
     }
 
 
@@ -300,6 +336,7 @@ def build_generation_prompt(
     profile: Mapping[str, Any],
     ranked_trends: Iterable[Mapping[str, Any]],
     published_titles: Iterable[str] = (),
+    presentation_reference_analysis: Mapping[str, Any] | None = None,
     *, top: int = 15,
 ) -> str:
     """Build the mandatory handoff from deterministic ranking to agent generation."""
@@ -308,6 +345,7 @@ def build_generation_prompt(
         "profile": profile,
         "ranked_trends": list(ranked_trends),
         "published_reference_titles": list(published_titles),
+        "presentation_reference_analysis": dict(presentation_reference_analysis or {}),
     }
     fields = ", ".join(profile["output"]["required_fields"])
     return (
@@ -323,6 +361,19 @@ def build_generation_prompt(
         "saturation risk, urgency, and recommendation rationale. Do not copy or closely "
         "paraphrase any reference title or transcript. Every factual trend claim needs a "
         "source URL and observation date.\n"
+        "For every compatible trend, compare all presentation_options and select the one "
+        "whose promise the evidence can deliver. A kill count, ranked list, worst/best "
+        "compilation, exhaustive 'every' survey, quantified stake, or extreme comparison "
+        "is allowed only when bounded units, counts, or comparisons are already supported. "
+        "Use a familiar work as a thematic lens only when it exposes a charged human or "
+        "system theme. Use an answerable mystery only for a concrete contradiction with a "
+        "researchable payoff. Reject identity-only 'who made/created/is behind X' premises "
+        "unless identity changes a documented consequence, mechanism, or central contradiction.\n"
+        "sensationalism_potential_score measures safe packaging headroom from 0-100, not "
+        "trend strength, truth probability, or permission to exaggerate facts. Never exceed "
+        "the selected archetype's sensationalism_ceiling. State title mechanic, content "
+        "approach, rationale, and reference-pattern evidence explicitly. Reference channels "
+        "teach abstract presentation grammar only; their subjects and wording are forbidden.\n"
         f"Every proposal must contain: {fields}.\n\n"
         "INPUT_JSON\n"
         + json.dumps(context, ensure_ascii=False, indent=2)

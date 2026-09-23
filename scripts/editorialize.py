@@ -19,6 +19,7 @@ from youtube_trend_finder import (  # noqa: E402
     build_generation_prompt,
     draft_suggestion,
     load_profile,
+    load_presentation_reference_analysis,
     load_reference_titles,
     rank_trends_for_profile,
 )
@@ -88,6 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         profile = load_profile(args.profile)
         reference_titles = load_reference_titles(profile)
+        presentation_analysis = load_presentation_reference_analysis(profile)
         rows = _read_rows(source)
         annotate_coverage(rows, profile)
     except (ProfileError, OSError, ValueError, json.JSONDecodeError) as exc:
@@ -127,7 +129,14 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(drafts, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     prompt_path.write_text(
-        build_generation_prompt(profile.data, selected, reference_titles, top=args.top) + "\n",
+        build_generation_prompt(
+            profile.data,
+            selected,
+            reference_titles,
+            presentation_analysis,
+            top=args.top,
+        )
+        + "\n",
         encoding="utf-8",
     )
     print(

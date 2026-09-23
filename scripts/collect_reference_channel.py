@@ -24,7 +24,13 @@ from youtube_trend_finder.reference_channel import (  # noqa: E402
 
 def _profile_output(profile_dir: Path, relative: str) -> Path:
     target = (profile_dir / relative).resolve()
-    if profile_dir not in target.parents:
+    reference_root = (profile_dir / "references").resolve()
+    if not (
+        profile_dir == target
+        or profile_dir in target.parents
+        or reference_root == target
+        or reference_root in target.parents
+    ):
         raise ProfileError("Reference output paths must stay inside the profile directory.")
     return target
 

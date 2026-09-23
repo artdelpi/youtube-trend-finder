@@ -8,10 +8,11 @@ Use this repository's profile-aware YouTube trend workflow.
 4. Choose broad English niche keywords and run `py scripts/collect.py` with the validated `--profile`. Use 7/30/60-day collections for `compare`.
 5. Read every raw API file and profile-context snapshot, then build candidate themes with dated evidence.
 6. Run `py scripts/editorialize.py --profile <id> --input <candidates>`.
-7. Use the generated profile ranking and generation prompt to create original proposals. The profile must alter selection, score, title, angle, hook, thesis, structure, differentiation, saturation risk, and rationale.
+7. Use the generated profile ranking, presentation options, and generation prompt to create original proposals. The profile must alter selection, score, title, angle, hook, thesis, structure, differentiation, saturation risk, and rationale.
 8. Preserve `api_*`, `collector_*`, `codex_*`, and `profile_*` boundaries. Record incompatible discards; never copy or closely paraphrase reference titles or transcripts.
-9. Write `*-trending_themes.csv` with `theme` plus the proposal fields required by the profile.
-10. Finish with profile id, keywords, window/intent, CSV path, top five adapted titles and source themes, evidence/quota counts, discards, limitations, and:
+9. Select the best supported case ladder, thematic lens, answerable mystery, quantified stakes, or extreme comparison. Reject identity-only creator lookups; counts and superlatives require evidence.
+10. Write `*-trending_themes.csv` with `theme` plus the proposal fields required by the profile, including presentation archetype and sensationalism potential.
+11. Finish with profile id, keywords, window/intent, CSV path, top five adapted titles and source themes, evidence/quota counts, discards, limitations, and:
 
 ```text
 /research --themes-csv "<path-to-trending_themes.csv>" --rank 1

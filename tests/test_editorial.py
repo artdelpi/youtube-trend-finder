@@ -48,11 +48,19 @@ class EditorialRankingTest(unittest.TestCase):
 
     def test_profile_reaches_generation_handoff(self) -> None:
         ranked = rank_trends_for_profile(self.trends[:1], self.profile)
-        prompt = build_generation_prompt(self.profile, ranked, ["An existing title"])
+        prompt = build_generation_prompt(
+            self.profile,
+            ranked,
+            ["An existing title"],
+            {"channels": [{"id": "PoppyTheory"}]},
+        )
         self.assertIn("profile 'possumdotmov'", prompt)
         self.assertIn('"id": "possumdotmov"', prompt)
         for field in ("title", "hook", "thesis", "structure", "profile_fit_score"):
             self.assertIn(field, prompt)
+        self.assertIn("presentation_options", prompt)
+        self.assertIn("identity-only", prompt)
+        self.assertIn('"id": "PoppyTheory"', prompt)
 
     def test_trend_score_keeps_six_volatile_components_separate(self) -> None:
         trend = {
@@ -76,11 +84,13 @@ class EditorialRankingTest(unittest.TestCase):
         ranked = rank_trends_for_profile(self.trends[:1], self.profile)[0]
         suggestion = draft_suggestion(ranked, self.profile)
         self.assertEqual(suggestion["profile_id"], "possumdotmov")
-        self.assertIn("Darkest Cases", suggestion["title"])
+        self.assertIn("Cases That Changed", suggestion["title"])
         self.assertIn("case-file", suggestion["angle"])
         self.assertIn("documented cases", suggestion["hook"])
         self.assertGreaterEqual(len(suggestion["structure"]), 7)
         self.assertIn("verified incident", suggestion["structure"][0])
+        self.assertEqual(suggestion["presentation_archetype"], "escalating-case-ladder")
+        self.assertGreater(suggestion["sensationalism_potential_score"], 0)
 
 
 if __name__ == "__main__":

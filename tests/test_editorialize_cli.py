@@ -44,6 +44,7 @@ class EditorializeCliTests(unittest.TestCase):
             out, err = io.StringIO(), io.StringIO()
             with mock.patch.object(cli, "load_profile", return_value=profile), \
                  mock.patch.object(cli, "load_reference_titles", return_value=[]), \
+                 mock.patch.object(cli, "load_presentation_reference_analysis", return_value={"channels": []}), \
                  contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
                 code = cli.main(args)
             if code:
